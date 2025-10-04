@@ -12,6 +12,7 @@ class Post(Base):
     dashboard_url = Column(Text)
     indicators = Column(Text)
     date = Column(Date)
+    message_id = Column(Integer)
 
 
 

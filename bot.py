@@ -1,14 +1,14 @@
-import os
 import asyncio
-from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters.command import Command
 from keyboards import get_main_menu
 from handlers.create_post import create_post
+from handlers.delete_post import del_post
 from db.db_connet import init_db
+from service import token_env
 
-load_dotenv()
-API_TOKEN = os.getenv('TOKEN_BOT')
+
+API_TOKEN = token_env.token_bot
 
 
 init_db()
@@ -23,6 +23,7 @@ async def cmd_start(message:types.Message):
 
 async def main():
     dp.include_router(create_post)
+    dp.include_router(del_post)
     await dp.start_polling(bot)
 
 

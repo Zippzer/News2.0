@@ -5,8 +5,7 @@ from aiogram.types import Message
 from datetime import date
 from db.CRUD import CreatePost
 from db.db_connet import Session
-from dotenv import load_dotenv
-import os
+from service import token_env
 
 
 class Post(StatesGroup):
@@ -18,9 +17,8 @@ class Post(StatesGroup):
     date = State()
 
 
-load_dotenv()
 create_post = Router()
-MY_CHANNEL = os.getenv('MY_CHANNEL')
+MY_CHANNEL = token_env.my_channel
 
 
 @create_post.message(F.text == 'Создать пост')
@@ -60,22 +58,25 @@ async def process_dashboard_url(message:Message, state:FSMContext):
 
 @create_post.message(Post.indicators)
 async def proces_indicators_date(message:Message, state:FSMContext):
-    await state.update_data(indicators=message.text,date=date.today())
+    await state.update_data(indicators=message.text, date=date.today())
     data = await state.get_data()
 
     summary = (
-        f"*📢 Новый пост!*\n\n"
-        f"*Тема:* {data['topic']}\n"
-        f"*Дашборд №:* {data['dashboard']}\n"
-        f"*Ссылка на дашборд:* [Перейти]({data['dashboard_url']})\n"
-        f"*Показатели:*\n{data['indicators']}\n"
-        f"*Дата:* {data['date']}"
+        "📢 Новый пост!\n\n"
+        "📝 Тема:\n"
+        f"{data['topic']}\n\n"
+        "📊 Дашборд:\n"
+        f"{data['dashboard']}\n"
+        f"Ссылка: {data['dashboard_url']}\n\n"
+        "📈 Показатели:\n"
+        f"{data['indicators']}\n\n"
     )
 
     db = Session()
-    await message.bot.send_photo(chat_id=MY_CHANNEL, photo=data['photo'], caption=summary, parse_mode="Markdown")
+    sent_msg = await message.bot.send_photo(chat_id=MY_CHANNEL, photo=data['photo'], caption=summary, parse_mode="Markdown")
     photo_id = data.pop('photo', None)
-    CreatePost(db, data)
+    data['message_id'] = sent_msg.message_id
+    await CreatePost(db, data)
     await message.answer("Пост успешно создан!")
     db.close()
     await state.clear()
