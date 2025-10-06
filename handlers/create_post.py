@@ -6,6 +6,7 @@ from datetime import date
 from db.CRUD import CreatePost
 from db.db_connet import Session
 from service import token_env
+from db.redis_connect import r
 
 
 class Post(StatesGroup):
@@ -58,9 +59,15 @@ async def process_dashboard_url(message:Message, state:FSMContext):
 
 @create_post.message(Post.indicators)
 async def proces_indicators_date(message:Message, state:FSMContext):
-    await state.update_data(indicators=message.text, date=date.today())
+    number_dashboard = await state.get_data()
+    cache = r.get(number_dashboard['dashboard'])
+    if cache:
+        await state.update_data(indicators=cache, date=date.today())
+        await message.answer('Показатели подтянулись')
+    else:
+        await state.update_data(indicators=message.text, date=date.today())
+        r.set(number_dashboard['dashboard'], message.text)
     data = await state.get_data()
-
     summary = (
         "📢 Новый пост!\n\n"
         "📝 Тема:\n"
@@ -74,7 +81,6 @@ async def proces_indicators_date(message:Message, state:FSMContext):
 
     db = Session()
     sent_msg = await message.bot.send_photo(chat_id=MY_CHANNEL, photo=data['photo'], caption=summary, parse_mode="Markdown")
-    photo_id = data.pop('photo', None)
     data['message_id'] = sent_msg.message_id
     await CreatePost(db, data)
     await message.answer("Пост успешно создан!")

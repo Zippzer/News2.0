@@ -12,6 +12,9 @@ class ENV:
         self.POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
         self.POSTGRES_DB = os.getenv("POSTGRES_DB")
         self.POSTGRES_PORT = os.getenv("POSTGRES_PORT")
+        self.REDIS_HOST = os.getenv("REDIS_HOST ")
+        self.REDIS_PORT = os.getenv("REDIS_PORT")
+        self.PASSWORD = os.getenv("REDIS_PASSWORD")
 
 
 token_env = ENV()
